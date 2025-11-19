@@ -18,8 +18,8 @@ private enum Constants {
     static var dividerHeight: CGFloat { 1 }
     static var newProductSheetHeight: CGFloat { 200 }
     
-    static var alertMainText: String { "Are you sure you want to remove this product?" }
-    static var alertSecondaryText: String { "This action cannot be undone" }
+    static var deletionAlertPrimaryText: String { "Are you sure you want to remove this product?" }
+    static var deletionAlertSecondaryText: String { "This action cannot be undone" }
     static var alertDeleteButtonText: String { "Delete" }
     static var alertCancelButtonText: String { "Cancel" }
 }
@@ -37,7 +37,7 @@ struct ProductsListView: View {
 
     private var products: FetchedResults<ProductItem>
     
-    private var totalCalories: Int {
+    private var allProductsCaloriesTotalSummary: Int {
         products.map { Int($0.calories) }.reduce(0, +)
     }
     
@@ -45,7 +45,7 @@ struct ProductsListView: View {
         VStack(alignment: .leading) {
             VStack(alignment: .center) {
                 HStack(alignment: .center) {
-                    Text(Constants.totalCaloriesText + "\(totalCalories)")
+                    Text(Constants.totalCaloriesText + "\(allProductsCaloriesTotalSummary)")
                         .font(.title)
                         .bold()
                     
@@ -97,7 +97,8 @@ struct ProductsListView: View {
             ProductUpdateSheetView(selectedProduct: $productToEdit)
                 .presentationDetents([.height(Constants.newProductSheetHeight)])
         }
-        .alert(Constants.alertMainText, isPresented: $showDeleteAlert) {
+        // For some reason CustomAlertView is not showing List reaload animation, so here we use native one
+        .alert(Constants.deletionAlertPrimaryText, isPresented: $showDeleteAlert) {
             Button(Constants.alertDeleteButtonText, role: .destructive) {
                 if let item = productToDelete,
                    let index = products.firstIndex(of: item) {
@@ -115,7 +116,7 @@ struct ProductsListView: View {
                 productToDelete = nil
             }
         } message: {
-            Text(Constants.alertSecondaryText)
+            Text(Constants.deletionAlertSecondaryText)
         }
     }
 }

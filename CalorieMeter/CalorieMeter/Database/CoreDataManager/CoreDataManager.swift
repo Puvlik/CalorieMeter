@@ -12,10 +12,37 @@ import CoreData
 private enum Constants {
     static var dataSavedSuccessfullyText: String { "Success! Data saved" }
     static var dataNotSavedText: String { "We could not save the data..." }
+    
+    static var fetchRequestLimit: Int { 1 }
+}
+
+// MARK: Enums
+// ProductCheckResult used for fields validation controlling state of adding new products
+enum ProductCheckResult {
+    // EmptyFieldsDataIssue for validating what fields is causing an issue
+    enum EmptyFieldsDataIssue {
+        // EmptyField for validating what field is not filled while second one is OK
+        enum EmptyField {
+            case productTitle
+            case productCalories
+        }
+        
+        case bothFieldsEmpty
+        // Title field or calories field is empty
+        case fieldEmpty(EmptyField)
+    }
+    
+    // No errors or duplicates
+    case success
+    // At least one duplicate is found
+    case duplicate
+    // One or any fields are not filled
+    case emptyData(EmptyFieldsDataIssue)
+    case failure(Error)
 }
 
 // MARK: - CoreDataManager
-struct CoreDataManager {
+final class CoreDataManager {
     let container: NSPersistentContainer
 
     init() {
@@ -65,31 +92,29 @@ struct CoreDataManager {
         CoreDataManager().save(context: context)
     }
     
-    func checkForDuplicatesBy(predicate: String, product: (String, Double), showAlert: inout Bool, managedContext: NSManagedObjectContext, completion: () -> ()) {
+    // Validate all fields to find empty values or duplicates
+    func validateProductInformation(productInfo: (title: String, calories: Double), managedContext: NSManagedObjectContext) -> ProductCheckResult {
+
+        let titleIsEmpty = productInfo.title.isEmpty
+        let caloriesIsZero = productInfo.calories == 0
+
+        switch (titleIsEmpty, caloriesIsZero) {
+        case (true, true): return .emptyData(.bothFieldsEmpty)
+        case (true, _): return .emptyData(.fieldEmpty(.productTitle))
+        case (_, true): return .emptyData(.fieldEmpty(.productCalories))
+        default: break
+        }
+
         let fetchRequest: NSFetchRequest<ProductItem> = ProductItem.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "\(predicate) ==[c] %@", product.0)
-        fetchRequest.fetchLimit = 1
+        fetchRequest.predicate = NSPredicate(format: "title ==[c] %@", productInfo.title)
+        fetchRequest.fetchLimit = Constants.fetchRequestLimit
         
         do {
-            let count = try managedContext.count(for: fetchRequest)
-            
-            guard count == 0 else {
-                showAlert = true
-                return
-            }
-            
-            withAnimation {
-                CoreDataManager().addEntity(
-                    titled: product.0,
-                    caloriсСontent: product.1,
-                    context: managedContext
-                )
-                
-                completion()
-            }
+            let matches = try managedContext.count(for: fetchRequest)
+            return (matches > 0 ? .duplicate : .success)
         } catch {
             print("Error checking duplicates: \(error.localizedDescription)")
-            return
+            return .failure(error)
         }
     }
 }
