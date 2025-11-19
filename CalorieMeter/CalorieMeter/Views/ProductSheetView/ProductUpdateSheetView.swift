@@ -45,12 +45,17 @@ private enum Constants {
     
     static var addImageIconHeight: CGFloat { 24 }
     static var addImageIconWidth: CGFloat { 30 }
+    
+    static var fractionMinimumValue: CGFloat { 0.31 }
+    static var fractionMaximumValue: CGFloat { 0.52 }
 }
 
 // MARK: - ProductUpdateSheetView
 struct ProductUpdateSheetView: View {
     @Environment(\.managedObjectContext) var managedContext
     @Environment(\.dismiss) var dismiss
+    
+    @FocusState private var titleFieldIsFocused: Bool
     
     @State private var title = ""
     @State private var calories: Double? = nil
@@ -72,6 +77,7 @@ struct ProductUpdateSheetView: View {
         Form {
             Section {
                 TextField(Constants.productTitlePlaceholder, text: $title)
+                    .focused($titleFieldIsFocused)
                 
                 TextField(Constants.productCaloriesPlaceholder, value: $calories, formatter: numberFormatter)
                     .keyboardType(.numberPad)
@@ -119,12 +125,18 @@ struct ProductUpdateSheetView: View {
         }
         .scrollIndicators(.hidden)
         .listSectionSpacing(.compact)
+        .presentationDetents([.fraction(
+            pickedImage == nil ? Constants.fractionMinimumValue : Constants.fractionMaximumValue)]
+        )
         .onAppear {
+            titleFieldIsFocused = true
+            
             guard let selectedProduct,
                   let productTitle = selectedProduct.title else { return }
             
             title = productTitle
             calories = selectedProduct.calories
+            pickedImage = selectedProduct.image.flatMap { UIImage(data: $0) }
         }
         .alert(item: $customAlertView) { alert in
             alert.makeAlert()

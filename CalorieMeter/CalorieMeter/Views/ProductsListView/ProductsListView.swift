@@ -24,7 +24,6 @@ private enum Constants {
     static var totalCaloriesTopPadding: CGFloat { 16 }
     static var dividerHeight: CGFloat { 1 }
     static var dividerTopPadding: CGFloat { 8 }
-    static var newProductSheetHeight: CGFloat { 400 }
     
     static var deletionAlertPrimaryText: String { "Are you sure you want to remove this product?" }
     static var deletionAlertSecondaryText: String { "This action cannot be undone" }
@@ -113,7 +112,6 @@ struct ProductsListView: View {
         }
         .sheet(isPresented: $showAddProductSheetView) {
             ProductUpdateSheetView(selectedProduct: $productToEdit)
-                .presentationDetents([.height(Constants.newProductSheetHeight)])
         }
         // For some reason CustomAlertView is not showing List reload animation, so here we use default one
         .alert(Constants.deletionAlertPrimaryText, isPresented: $showDeleteAlert) {
