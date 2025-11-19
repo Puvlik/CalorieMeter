@@ -14,7 +14,7 @@ private enum Constants {
     static var buttonContentSpacing: CGFloat { 8 }
     static var buttonWidth: CGFloat { 90 }
     static var buttonHeight: CGFloat { 40 }
-    static var buttonCornerRadius: CGFloat { 25 }
+    static var buttonCornerRadius: CGFloat { 16 }
     static var buttonBorderWidth: CGFloat { 2 }
     
     static var cartIconWidth: CGFloat { 25 }
@@ -48,14 +48,13 @@ struct AddNewProductButton: View {
         .background(
             RoundedRectangle(
                 cornerRadius: Constants.buttonCornerRadius,
-                style: .continuous
             )
-            .foregroundColor(Color("addButtonColor"))
+            .foregroundColor(Color("customButtonBackgroundColor"))
         )
         .overlay(
             RoundedRectangle(cornerRadius: Constants.buttonCornerRadius)
                 .stroke(
-                    Color("addButtonBorderColor"),
+                    Color("customButtonBorderColor"),
                     lineWidth: Constants.buttonBorderWidth
                 )
         )

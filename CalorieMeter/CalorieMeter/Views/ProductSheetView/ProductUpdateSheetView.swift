@@ -38,16 +38,13 @@ private enum Constants {
     
     static var noCaloriesValue: CGFloat { 0 }
     
-    static var productImageCornerRadius: CGFloat { 24 }
-    static var productImageHeight: CGFloat { 200 }
-    
     static var photoPickerButtonText: String { "Add image" }
     static var photoPickerButtonHeight: CGFloat { 45 }
     static var photoPickerButtonTextFontSize: CGFloat { 18 }
     static var photoPickerButtonContentSpacing: CGFloat { 16 }
     
-    static var addImageIconHeight: CGFloat { 30 }
-    static var addImageIconWidth: CGFloat { 24 }
+    static var addImageIconHeight: CGFloat { 24 }
+    static var addImageIconWidth: CGFloat { 30 }
 }
 
 // MARK: - ProductUpdateSheetView
@@ -80,11 +77,7 @@ struct ProductUpdateSheetView: View {
                     .keyboardType(.numberPad)
                 
                 if let uiImage = pickedImage ?? (selectedProduct?.image.flatMap { UIImage(data: $0) }) {
-                    Image(uiImage: uiImage)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(height: Constants.productImageHeight)
-                        .clipShape(RoundedRectangle(cornerRadius: Constants.productImageCornerRadius))
+                    ProductLargeImageView(showPicker: $showPicker, image: uiImage)
                 } else {
                     Button {
                         showPicker = true
@@ -102,7 +95,6 @@ struct ProductUpdateSheetView: View {
                                 .frame(width: Constants.addImageIconWidth, height: Constants.addImageIconHeight)
                             
                             Spacer()
-                                
                         }
                     }
                     .frame(height: Constants.photoPickerButtonHeight)
