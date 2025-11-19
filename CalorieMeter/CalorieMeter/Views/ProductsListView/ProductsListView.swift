@@ -119,7 +119,7 @@ struct ProductsListView: View {
             Button(Constants.alertDeleteButtonText, role: .destructive) {
                 if let item = productToDelete,
                    let index = products.firstIndex(of: item) {
-                    withAnimation {
+                    withAnimation(.spring) {
                         CoreDataManager().deleteEntity(
                             offsets: IndexSet(integer: index),
                             products: products,

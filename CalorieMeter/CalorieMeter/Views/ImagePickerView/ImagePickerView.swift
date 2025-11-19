@@ -48,7 +48,7 @@ struct ImagePickerView: UIViewControllerRepresentable {
             if provider.canLoadObject(ofClass: UIImage.self) {
                 provider.loadObject(ofClass: UIImage.self) { image, _ in
                     DispatchQueue.main.async {
-                        withAnimation {
+                        withAnimation(.spring) {
                             self.parent.selectedImage = image as? UIImage
                         }
                     }

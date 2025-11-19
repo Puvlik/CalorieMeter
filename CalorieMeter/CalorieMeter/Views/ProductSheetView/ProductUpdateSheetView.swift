@@ -154,7 +154,7 @@ struct ProductUpdateSheetView: View {
 private extension ProductUpdateSheetView {
     // Save edited product
     private func editExistingProduct(_ product: ProductItem) {
-        withAnimation {
+        withAnimation(.spring) {
             CoreDataManager().editEntity(
                 product,
                 with: (title, calories: calories ?? Constants.noCaloriesValue),
@@ -168,7 +168,7 @@ private extension ProductUpdateSheetView {
     
     // Add new product to List
     private func saveNewProduct() {
-        withAnimation {
+        withAnimation(.spring) {
             CoreDataManager().addEntity(
                 titled: title,
                 calories: calories ?? Constants.noCaloriesValue,
