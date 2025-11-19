@@ -99,12 +99,13 @@ struct ProductsListView: View {
                         .tint(.indigo)
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button(role: .destructive) {
+                        Button {
                             productToDelete = product
                             showDeleteAlert.toggle()
                         } label: {
                             Label(Constants.deleteSwipeButtonLabelText, systemImage: "trash")
                         }
+                        .tint(.red)
                     }
                 }
             }
