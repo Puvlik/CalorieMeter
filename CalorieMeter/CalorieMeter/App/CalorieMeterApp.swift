@@ -13,7 +13,7 @@ struct CalorieMeterApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ProductsListView()
+            ProductsListView(context: coreDataStoreManager.container.viewContext)
                 .environment(\.managedObjectContext, coreDataStoreManager.container.viewContext)
         }
     }

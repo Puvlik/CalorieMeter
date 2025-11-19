@@ -33,32 +33,27 @@ private enum Constants {
 
 // MARK: - ProductsListView
 struct ProductsListView: View {
-    @Environment(\.managedObjectContext) private var managedContext
-    
-    @State private var showAddProductSheetView = false
-    @State private var showDeleteAlert = false
-    @State private var productToDelete: ProductItem?
-    @State private var productToEdit: ProductItem?
+    @StateObject private var viewModel: ProductsListViewModel
     
     @FetchRequest(sortDescriptors: [SortDescriptor(\.fillingDate, order: .reverse)])
-
-    private var products: FetchedResults<ProductItem>
+    private var fetchedProducts: FetchedResults<ProductItem>
     
-    private var allProductsCaloriesTotalSummary: Int {
-        products.map { Int($0.calories) }.reduce(0, +)
+    // MARK: - Init
+    init(context: NSManagedObjectContext) {
+        _viewModel = StateObject(wrappedValue: ProductsListViewModel(context: context))
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Constants.mainViewContentSpacing) {
             VStack(alignment: .center) {
                 HStack(alignment: .center) {
-                    Text(Constants.totalCaloriesText + "\(allProductsCaloriesTotalSummary)")
+                    Text(Constants.totalCaloriesText + "\(viewModel.totalCaloriesSummary(for: fetchedProducts))")
                         .font(.title)
                         .bold()
                     
                     Spacer()
                     
-                    AddNewProductButton(openSheetView: $showAddProductSheetView)
+                    AddNewProductButton(openSheetView: $viewModel.showEditProductSheet)
                 }
                 
                 Divider()
@@ -69,71 +64,66 @@ struct ProductsListView: View {
             .padding(.top, Constants.totalCaloriesTopPadding)
             
             List {
-                ForEach(products) { product in
-                    HStack(alignment: .center, spacing: Constants.productRowHorizontalSpacing) {
-                        // Its impossible to get title == nil, but anyway lets avoid force unwrap
-                        Text(product.title ?? Constants.emptyString)
-                            .bold()
-                        
-                        Spacer()
-
-                        if let data = product.image, let image = UIImage(data: data) {
-                            Image(uiImage: image)
-                                .resizable()
-                                .frame(width: Constants.productRowImageWidth, height: Constants.productRowImageHeight)
-                                .clipShape(RoundedRectangle(cornerRadius: Constants.productRowImageCornerRadius))
-                        }
-                        
-                        Spacer()
-                        
-                        Text("\(Int(product.calories))")
-                            .foregroundColor(.gray)
-                    }
-                    .swipeActions(edge: .leading, allowsFullSwipe: false) {
-                        Button {
-                            productToEdit = product
-                            showAddProductSheetView.toggle()
-                        } label: {
-                            Label(Constants.editSwipeButtonLabelText, systemImage: "pencil")
-                        }
-                        .tint(.indigo)
-                    }
-                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button {
-                            productToDelete = product
-                            showDeleteAlert.toggle()
-                        } label: {
-                            Label(Constants.deleteSwipeButtonLabelText, systemImage: "trash")
-                        }
-                        .tint(.red)
-                    }
+                ForEach(fetchedProducts) { product in
+                    setupProductListRow(with: product)
                 }
             }
             .listStyle(.plain)
         }
-        .sheet(isPresented: $showAddProductSheetView) {
-            ProductUpdateSheetView(selectedProduct: $productToEdit)
+        .sheet(isPresented: $viewModel.showEditProductSheet) {
+            ProductUpdateSheetView(selectedProduct: $viewModel.productToEdit)
         }
         // For some reason CustomAlertView is not showing List reload animation, so here we use default one
-        .alert(Constants.deletionAlertPrimaryText, isPresented: $showDeleteAlert) {
+        .alert(Constants.deletionAlertPrimaryText, isPresented: $viewModel.showDeleteAlert) {
             Button(Constants.alertDeleteButtonText, role: .destructive) {
-                if let item = productToDelete,
-                   let index = products.firstIndex(of: item) {
-                    withAnimation(.spring) {
-                        CoreDataManager().deleteEntity(
-                            offsets: IndexSet(integer: index),
-                            products: products,
-                            context: managedContext
-                        )
-                    }
-                }
+                viewModel.approveProductForDeletion(from: fetchedProducts)
             }
             
             Button(Constants.alertCancelButtonText, role: .cancel) {
-                productToDelete = nil
+                viewModel.clearDeletionState()
             }
         } message: {
             Text(Constants.deletionAlertSecondaryText)
+        }
+    }
+}
+
+extension ProductsListView {
+    private func setupProductListRow(with product: ProductItem) -> some View {
+        HStack(alignment: .center, spacing: Constants.productRowHorizontalSpacing) {
+            // Its impossible to get title == nil, but anyway lets avoid force unwrap
+            Text(product.title ?? Constants.emptyString)
+                .bold()
+            
+            Spacer()
+
+            if let data = product.image, let image = UIImage(data: data) {
+                Image(uiImage: image)
+                    .resizable()
+                    .frame(width: Constants.productRowImageWidth, height: Constants.productRowImageHeight)
+                    .clipShape(RoundedRectangle(cornerRadius: Constants.productRowImageCornerRadius))
+            }
+            
+            Spacer()
+            
+            Text("\(Int(product.calories))")
+                .foregroundColor(.gray)
+        }
+        .swipeActions(edge: .leading, allowsFullSwipe: false) {
+            Button {
+                viewModel.setStateForProductEditing(product)
+            } label: {
+                Label(Constants.editSwipeButtonLabelText, systemImage: "pencil")
+            }
+            .tint(.indigo)
+        }
+        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+            Button {
+                viewModel.setStateForProductDeletion(product)
+            } label: {
+                Label(Constants.deleteSwipeButtonLabelText, systemImage: "trash")
+            }
+            .tint(.red)
         }
     }
 }
