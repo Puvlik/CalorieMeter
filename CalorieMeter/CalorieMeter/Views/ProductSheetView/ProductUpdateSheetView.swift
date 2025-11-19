@@ -54,7 +54,15 @@ struct ProductUpdateSheetView: View {
                 
                 Button(Constants.saveButtonText) {
                     guard let product = selectedProduct else {
-                        checkForDuplicates()
+                        CoreDataManager().checkForDuplicatesBy(
+                            predicate: "title",
+                            product: (title, calories ?? Constants.noCaloriesValue),
+                            showAlert: &showDuplicateAlert,
+                            managedContext: managedContext
+                        ) {
+                            dismiss()
+                        }
+
                         return
                     }
                     
@@ -99,37 +107,6 @@ struct ProductUpdateSheetView: View {
             }
         } message: {
             Text(Constants.duplicatesAlertSecondaryText)
-        }
-    }
-}
-
-// MARK: - extension ProductUpdateSheetView
-private extension ProductUpdateSheetView {
-    private func checkForDuplicates() {
-        let fetchRequest: NSFetchRequest<ProductItem> = ProductItem.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "title ==[c] %@", title)
-        fetchRequest.fetchLimit = 1
-        
-        do {
-            let count = try managedContext.count(for: fetchRequest)
-            
-            guard count == 0 else {
-                showDuplicateAlert = true
-                return
-            }
-            
-            withAnimation {
-                CoreDataManager().addEntity(
-                    titled: title,
-                    caloriсСontent: calories ?? Constants.noCaloriesValue,
-                    context: managedContext
-                )
-                
-                dismiss()
-            }
-        } catch {
-            print("Error checking duplicates: \(error.localizedDescription)")
-            return
         }
     }
 }

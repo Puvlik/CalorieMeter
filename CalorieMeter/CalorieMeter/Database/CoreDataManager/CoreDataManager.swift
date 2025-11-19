@@ -64,4 +64,32 @@ struct CoreDataManager {
         offsets.map { products[$0] }.forEach(context.delete)
         CoreDataManager().save(context: context)
     }
+    
+    func checkForDuplicatesBy(predicate: String, product: (String, Double), showAlert: inout Bool, managedContext: NSManagedObjectContext, completion: () -> ()) {
+        let fetchRequest: NSFetchRequest<ProductItem> = ProductItem.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "\(predicate) ==[c] %@", product.0)
+        fetchRequest.fetchLimit = 1
+        
+        do {
+            let count = try managedContext.count(for: fetchRequest)
+            
+            guard count == 0 else {
+                showAlert = true
+                return
+            }
+            
+            withAnimation {
+                CoreDataManager().addEntity(
+                    titled: product.0,
+                    caloriсСontent: product.1,
+                    context: managedContext
+                )
+                
+                completion()
+            }
+        } catch {
+            print("Error checking duplicates: \(error.localizedDescription)")
+            return
+        }
+    }
 }
