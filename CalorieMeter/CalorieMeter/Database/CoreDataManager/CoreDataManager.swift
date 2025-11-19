@@ -14,6 +14,7 @@ private enum Constants {
     static var dataNotSavedText: String { "We could not save the data..." }
     
     static var fetchRequestLimit: Int { 1 }
+    static var imageCompressionQuality: CGFloat { 0.8 }
 }
 
 // MARK: Enums
@@ -68,33 +69,54 @@ final class CoreDataManager {
     }
     
     // Add new product to list
-    func addEntity(titled title: String, caloriсСontent: Double, context: NSManagedObjectContext) {
+    func addEntity(
+        titled title: String,
+        calories: Double,
+        productImage: UIImage?,
+        context: NSManagedObjectContext
+    ) {
         let product = ProductItem(context: context)
         product.id = UUID()
         product.fillingDate = Date()
         product.title = title.trimmingCharacters(in: .whitespacesAndNewlines)
-        product.calories = caloriсСontent
+        product.calories = calories
+        
+        if let image = productImage {
+            product.image = image.jpegData(compressionQuality: Constants.imageCompressionQuality)
+        }
         
         save(context: context)
     }
     
     // Update info of existing product
-    func editEntity(_ product: ProductItem, with info: (String, calories: Double), context: NSManagedObjectContext) {
+    func editEntity(
+        _ product: ProductItem,
+        with info: (String, calories: Double),
+        productImage: UIImage?,
+        context: NSManagedObjectContext
+    ) {
         product.title = info.0
         product.calories = info.calories
+        
+        if let image = productImage {
+            product.image = image.jpegData(compressionQuality: Constants.imageCompressionQuality)
+        }
         
         save(context: context)
     }
     
     // Delete product from list
-    func deleteEntities(offsets: IndexSet, products: FetchedResults<ProductItem>, context: NSManagedObjectContext) {
+    func deleteEntity(offsets: IndexSet, products: FetchedResults<ProductItem>, context: NSManagedObjectContext) {
         offsets.map { products[$0] }.forEach(context.delete)
         CoreDataManager().save(context: context)
     }
     
     // Validate all fields to find empty values or duplicates
-    func validateProductInformation(productInfo: (title: String, calories: Double), managedContext: NSManagedObjectContext) -> ProductCheckResult {
-
+    func validateProductInformation(
+        productInfo: (title: String, calories: Double),
+        exclude productToExclude: ProductItem? = nil,
+        managedContext: NSManagedObjectContext
+    ) -> ProductCheckResult {
         let titleIsEmpty = productInfo.title.isEmpty
         let caloriesIsZero = productInfo.calories == 0
 
@@ -106,8 +128,14 @@ final class CoreDataManager {
         }
 
         let fetchRequest: NSFetchRequest<ProductItem> = ProductItem.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "title ==[c] %@", productInfo.title)
         fetchRequest.fetchLimit = Constants.fetchRequestLimit
+        
+        if let id = productToExclude?.id {
+            // To exclude selected product from searching for duplicates
+            fetchRequest.predicate = NSPredicate(format: "title ==[c] %@ AND id != %@", productInfo.title, id as CVarArg)
+        } else {
+            fetchRequest.predicate = NSPredicate(format: "title ==[c] %@", productInfo.title)
+        }
         
         do {
             let matches = try managedContext.count(for: fetchRequest)

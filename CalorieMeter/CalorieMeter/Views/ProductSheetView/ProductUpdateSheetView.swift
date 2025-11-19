@@ -37,6 +37,17 @@ private enum Constants {
     static var alertOKButtonText: String { "OK" }
     
     static var noCaloriesValue: CGFloat { 0 }
+    
+    static var productImageCornerRadius: CGFloat { 24 }
+    static var productImageHeight: CGFloat { 200 }
+    
+    static var photoPickerButtonText: String { "Add image" }
+    static var photoPickerButtonHeight: CGFloat { 45 }
+    static var photoPickerButtonTextFontSize: CGFloat { 18 }
+    static var photoPickerButtonContentSpacing: CGFloat { 16 }
+    
+    static var addImageIconHeight: CGFloat { 30 }
+    static var addImageIconWidth: CGFloat { 24 }
 }
 
 // MARK: - ProductUpdateSheetView
@@ -46,6 +57,8 @@ struct ProductUpdateSheetView: View {
     
     @State private var title = ""
     @State private var calories: Double? = nil
+    @State private var pickedImage: UIImage?
+    @State private var showPicker = false
     
     @State private var numberFormatter: NumberFormatter = {
         var numberFormatter = NumberFormatter()
@@ -65,33 +78,67 @@ struct ProductUpdateSheetView: View {
                 
                 TextField(Constants.productCaloriesPlaceholder, value: $calories, formatter: numberFormatter)
                     .keyboardType(.numberPad)
+                
+                if let uiImage = pickedImage ?? (selectedProduct?.image.flatMap { UIImage(data: $0) }) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(height: Constants.productImageHeight)
+                        .clipShape(RoundedRectangle(cornerRadius: Constants.productImageCornerRadius))
+                } else {
+                    Button {
+                        showPicker = true
+                    } label: {
+                        HStack(alignment: .center, spacing: Constants.photoPickerButtonContentSpacing) {
+                            Spacer()
+                            
+                            Text(Constants.photoPickerButtonText)
+                                .font(
+                                    .system(size: Constants.photoPickerButtonTextFontSize, weight: .regular)
+                                )
+                            
+                            Image(systemName: "photo.badge.plus")
+                                .resizable()
+                                .frame(width: Constants.addImageIconWidth, height: Constants.addImageIconHeight)
+                            
+                            Spacer()
+                                
+                        }
+                    }
+                    .frame(height: Constants.photoPickerButtonHeight)
+                }
             }
             
             HStack {
                 Spacer()
                 
                 Button(Constants.saveButtonText) {
-                    let vadidationResult = CoreDataManager().validateProductInformation(
+                    let validationResult = CoreDataManager().validateProductInformation(
                         productInfo: (title: title, calories: calories ?? Constants.noCaloriesValue),
+                        exclude: selectedProduct,
                         managedContext: managedContext
                     )
                     
-                    constructCustomAlert(accordingTo: vadidationResult)
+                    constructCustomAlert(accordingTo: validationResult)
                 }
                 
                 Spacer()
             }
         }
+        .scrollIndicators(.hidden)
+        .listSectionSpacing(.compact)
         .onAppear {
             guard let selectedProduct,
-                    let productTitle = selectedProduct.title else { return }
+                  let productTitle = selectedProduct.title else { return }
             
             title = productTitle
             calories = selectedProduct.calories
         }
-        .listSectionSpacing(.compact)
         .alert(item: $customAlertView) { alert in
             alert.makeAlert()
+        }
+        .sheet(isPresented: $showPicker) {
+            ImagePickerView(selectedImage: $pickedImage)
         }
         .onDisappear {
             selectedProduct = nil
@@ -101,33 +148,43 @@ struct ProductUpdateSheetView: View {
 
 // MARK: - Extension
 private extension ProductUpdateSheetView {
+    // Save edited product
+    private func editExistingProduct(_ product: ProductItem) {
+        withAnimation {
+            CoreDataManager().editEntity(
+                product,
+                with: (title, calories: calories ?? Constants.noCaloriesValue),
+                productImage: pickedImage,
+                context: managedContext
+            )
+            
+            dismiss()
+        }
+    }
+    
+    // Add new product to List
+    private func saveNewProduct() {
+        withAnimation {
+            CoreDataManager().addEntity(
+                titled: title,
+                calories: calories ?? Constants.noCaloriesValue,
+                productImage: pickedImage,
+                context: managedContext
+            )
+            
+            dismiss()
+        }
+    }
+    
     func constructCustomAlert(accordingTo vadidationResult: ProductCheckResult) {
         switch vadidationResult {
         case .success: // No alert, just save product to DB
             customAlertView = nil
             
-            // Save edited product
             if let product = selectedProduct {
-                withAnimation {
-                    CoreDataManager().editEntity(
-                        product,
-                        with: (title, calories: calories ?? Constants.noCaloriesValue),
-                        context: managedContext
-                    )
-                    
-                    dismiss()
-                }
+                editExistingProduct(product)
             } else {
-                // Add new product to List
-                withAnimation {
-                    CoreDataManager().addEntity(
-                        titled: title,
-                        caloriсСontent: calories ?? Constants.noCaloriesValue,
-                        context: managedContext
-                    )
-                    
-                    dismiss()
-                }
+                saveNewProduct()
             }
             
         case .duplicate:
@@ -138,25 +195,9 @@ private extension ProductUpdateSheetView {
                     // If we editing existing product and it appears as duplicate,
                     // we need to edit existing entity, not creating new one
                     if let product = selectedProduct {
-                        withAnimation {
-                            CoreDataManager().editEntity(
-                                product,
-                                with: (title, calories: calories ?? Constants.noCaloriesValue),
-                                context: managedContext
-                            )
-                            
-                            dismiss()
-                        }
+                        editExistingProduct(product)
                     } else {
-                        withAnimation {
-                            CoreDataManager().addEntity(
-                                titled: title,
-                                caloriсСontent: calories ?? Constants.noCaloriesValue,
-                                context: managedContext
-                            )
-                            
-                            dismiss()
-                        }
+                        saveNewProduct()
                     }
                 },
                 secondaryButton: .cancel(Text(Constants.alertCancelButtonText)) {

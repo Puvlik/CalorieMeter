@@ -10,13 +10,21 @@ import CoreData
 
 // MARK: - Constants
 private enum Constants {
+    static var emptyString: String { "" }
     static var totalCaloriesText: String { "Total kcal: " }
     static var editSwipeButtonLabelText: String { "Edit" }
     static var deleteSwipeButtonLabelText: String { "Delete" }
     
+    static var mainViewContentSpacing: CGFloat { 0 }
+    static var productRowHorizontalSpacing: CGFloat { 8 }
+    static var productRowImageWidth: CGFloat { 85 }
+    static var productRowImageHeight: CGFloat { 50 }
+    static var productRowImageCornerRadius: CGFloat { 12 }
+    
     static var totalCaloriesTopPadding: CGFloat { 16 }
     static var dividerHeight: CGFloat { 1 }
-    static var newProductSheetHeight: CGFloat { 200 }
+    static var dividerTopPadding: CGFloat { 8 }
+    static var newProductSheetHeight: CGFloat { 400 }
     
     static var deletionAlertPrimaryText: String { "Are you sure you want to remove this product?" }
     static var deletionAlertSecondaryText: String { "This action cannot be undone" }
@@ -42,7 +50,7 @@ struct ProductsListView: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading) {
+        VStack(alignment: .leading, spacing: Constants.mainViewContentSpacing) {
             VStack(alignment: .center) {
                 HStack(alignment: .center) {
                     Text(Constants.totalCaloriesText + "\(allProductsCaloriesTotalSummary)")
@@ -56,16 +64,26 @@ struct ProductsListView: View {
                 
                 Divider()
                     .frame(height: Constants.dividerHeight)
-                    .overlay(Color("dividerColor"))
+                    .padding(.top, Constants.dividerTopPadding)
             }
             .padding(.horizontal)
             .padding(.top, Constants.totalCaloriesTopPadding)
             
             List {
-                ForEach(products.filter { $0.title != nil }) { product in
-                    HStack {
-                        Text(product.title!)
+                ForEach(products) { product in
+                    HStack(alignment: .center, spacing: Constants.productRowHorizontalSpacing) {
+                        // Its impossible to get title == nil, but anyway lets avoid force unwrap
+                        Text(product.title ?? Constants.emptyString)
                             .bold()
+                        
+                        Spacer()
+
+                        if let data = product.image, let image = UIImage(data: data) {
+                            Image(uiImage: image)
+                                .resizable()
+                                .frame(width: Constants.productRowImageWidth, height: Constants.productRowImageHeight)
+                                .clipShape(RoundedRectangle(cornerRadius: Constants.productRowImageCornerRadius))
+                        }
                         
                         Spacer()
                         
@@ -97,13 +115,13 @@ struct ProductsListView: View {
             ProductUpdateSheetView(selectedProduct: $productToEdit)
                 .presentationDetents([.height(Constants.newProductSheetHeight)])
         }
-        // For some reason CustomAlertView is not showing List reaload animation, so here we use native one
+        // For some reason CustomAlertView is not showing List reload animation, so here we use default one
         .alert(Constants.deletionAlertPrimaryText, isPresented: $showDeleteAlert) {
             Button(Constants.alertDeleteButtonText, role: .destructive) {
                 if let item = productToDelete,
                    let index = products.firstIndex(of: item) {
                     withAnimation {
-                        CoreDataManager().deleteEntities(
+                        CoreDataManager().deleteEntity(
                             offsets: IndexSet(integer: index),
                             products: products,
                             context: managedContext
