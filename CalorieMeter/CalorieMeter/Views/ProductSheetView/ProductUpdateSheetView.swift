@@ -71,27 +71,12 @@ struct ProductUpdateSheetView: View {
                 Spacer()
                 
                 Button(Constants.saveButtonText) {
-                    guard let product = selectedProduct else {
-                        let vadidationResult = CoreDataManager().validateProductInformation(
-                            productInfo: (title: title, calories: calories ?? Constants.noCaloriesValue),
-                            managedContext: managedContext
-                        )
-                        
-                        constructCustomAlert(accordingTo: vadidationResult)
-
-                        return
-                    }
+                    let vadidationResult = CoreDataManager().validateProductInformation(
+                        productInfo: (title: title, calories: calories ?? Constants.noCaloriesValue),
+                        managedContext: managedContext
+                    )
                     
-                    withAnimation {
-                        CoreDataManager().editEntity(
-                            product,
-                            with: (title, calories: calories ?? Constants.noCaloriesValue),
-                            context: managedContext
-                        )
-                        
-                        selectedProduct = nil
-                        dismiss()
-                    }
+                    constructCustomAlert(accordingTo: vadidationResult)
                 }
                 
                 Spacer()
@@ -108,6 +93,9 @@ struct ProductUpdateSheetView: View {
         .alert(item: $customAlertView) { alert in
             alert.makeAlert()
         }
+        .onDisappear {
+            selectedProduct = nil
+        }
     }
 }
 
@@ -118,14 +106,28 @@ private extension ProductUpdateSheetView {
         case .success: // No alert, just save product to DB
             customAlertView = nil
             
-            withAnimation {
-                CoreDataManager().addEntity(
-                    titled: title,
-                    caloriсСontent: calories ?? Constants.noCaloriesValue,
-                    context: managedContext
-                )
-                
-                dismiss()
+            // Save edited product
+            if let product = selectedProduct {
+                withAnimation {
+                    CoreDataManager().editEntity(
+                        product,
+                        with: (title, calories: calories ?? Constants.noCaloriesValue),
+                        context: managedContext
+                    )
+                    
+                    dismiss()
+                }
+            } else {
+                // Add new product to List
+                withAnimation {
+                    CoreDataManager().addEntity(
+                        titled: title,
+                        caloriсСontent: calories ?? Constants.noCaloriesValue,
+                        context: managedContext
+                    )
+                    
+                    dismiss()
+                }
             }
             
         case .duplicate:
@@ -133,14 +135,28 @@ private extension ProductUpdateSheetView {
                 title: Constants.duplicatesAlertPrimaryText,
                 message: Constants.duplicatesAlertSecondaryText,
                 primaryButton: .default(Text(Constants.saveButtonText)) {
-                    withAnimation {
-                        CoreDataManager().addEntity(
-                            titled: title,
-                            caloriсСontent: calories ?? Constants.noCaloriesValue,
-                            context: managedContext
-                        )
-                        
-                        dismiss()
+                    // If we editing existing product and it appears as duplicate,
+                    // we need to edit existing entity, not creating new one
+                    if let product = selectedProduct {
+                        withAnimation {
+                            CoreDataManager().editEntity(
+                                product,
+                                with: (title, calories: calories ?? Constants.noCaloriesValue),
+                                context: managedContext
+                            )
+                            
+                            dismiss()
+                        }
+                    } else {
+                        withAnimation {
+                            CoreDataManager().addEntity(
+                                titled: title,
+                                caloriсСontent: calories ?? Constants.noCaloriesValue,
+                                context: managedContext
+                            )
+                            
+                            dismiss()
+                        }
                     }
                 },
                 secondaryButton: .cancel(Text(Constants.alertCancelButtonText)) {
