@@ -11,14 +11,14 @@ import CoreData
 // MARK: - Constants
 private enum Constants {
     static var emptyString: String { "" }
-    static var totalCaloriesText: String { "Total kcal: " }
+    static var totalCaloriesText: String { "Total (kcal): " }
     static var editSwipeButtonLabelText: String { "Edit" }
     static var deleteSwipeButtonLabelText: String { "Delete" }
     
     static var mainViewContentSpacing: CGFloat { 0 }
     static var productRowHorizontalSpacing: CGFloat { 8 }
     static var productRowImageWidth: CGFloat { 85 }
-    static var productRowImageHeight: CGFloat { 50 }
+    static var productRowImageHeight: CGFloat { 80 }
     static var productRowImageCornerRadius: CGFloat { 12 }
     
     static var totalCaloriesTopPadding: CGFloat { 16 }
@@ -102,13 +102,14 @@ private extension ProductsListView {
             if let data = product.image, let image = UIImage(data: data) {
                 Image(uiImage: image)
                     .resizable()
-                    .frame(width: Constants.productRowImageWidth, height: Constants.productRowImageHeight)
+                    .aspectRatio(contentMode: .fit)
+                    .frame(height: Constants.productRowImageHeight)
                     .clipShape(RoundedRectangle(cornerRadius: Constants.productRowImageCornerRadius))
             }
             
             Spacer()
             
-            Text("\(Int(product.calories))")
+            Text("\(Int(product.calories)) kcal")
                 .foregroundColor(.gray)
         }
         .swipeActions(edge: .leading, allowsFullSwipe: false) {

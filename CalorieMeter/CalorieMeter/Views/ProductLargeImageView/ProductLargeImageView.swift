@@ -30,37 +30,38 @@ struct ProductLargeImageView: View {
     var productImage: UIImage
     
     var body: some View {
-        ZStack(alignment: .topTrailing) {
-            Image(uiImage: productImage)
-                .resizable()
-                .scaledToFill()
-                .frame(height: Constants.productImageHeight)
-                .clipShape(RoundedRectangle(cornerRadius: Constants.productImageCornerRadius))
-            
-            Button {
-                showImagePicker = true
-            } label: {
-                Image(systemName: "photo.badge.magnifyingglass")
-                    .renderingMode(.template)
+        ViewThatFits {
+            ZStack(alignment: .topTrailing) {
+                Image(uiImage: productImage)
                     .resizable()
-                    .frame(width: Constants.newImageIconWidth, height: Constants.newImageIconHeight)
-                    .foregroundStyle(.black)
-                    .padding([.leading, .top], Constants.newImageIconTopLeadingPadding)
+                    .aspectRatio(contentMode: .fit)
+                    .clipShape(RoundedRectangle(cornerRadius: Constants.productImageCornerRadius))
+                
+                Button {
+                    showImagePicker = true
+                } label: {
+                    Image(systemName: "photo.badge.magnifyingglass")
+                        .renderingMode(.template)
+                        .resizable()
+                        .frame(width: Constants.newImageIconWidth, height: Constants.newImageIconHeight)
+                        .foregroundStyle(.black)
+                        .padding([.leading, .top], Constants.newImageIconTopLeadingPadding)
+                }
+                .frame(width: Constants.buttonWidth, height: Constants.buttonHeight)
+                .buttonStyle(.plain)
+                .overlay(
+                    RoundedRectangle(cornerRadius: Constants.buttonCornerRadius)
+                        .stroke(
+                            Color("customButtonBorderColor"),
+                            lineWidth: Constants.buttonBorderWidth
+                        )
+                )
+                .background(
+                    RoundedRectangle(cornerRadius: Constants.buttonCornerRadius)
+                        .foregroundColor(Color("customButtonBackgroundColor"))
+                )
+                .padding([.trailing, .top], Constants.buttonTopTrailingPadding)
             }
-            .frame(width: Constants.buttonWidth, height: Constants.buttonHeight)
-            .buttonStyle(.plain)
-            .overlay(
-                RoundedRectangle(cornerRadius: Constants.buttonCornerRadius)
-                    .stroke(
-                        Color("customButtonBorderColor"),
-                        lineWidth: Constants.buttonBorderWidth
-                    )
-            )
-            .background(
-                RoundedRectangle(cornerRadius: Constants.buttonCornerRadius)
-                    .foregroundColor(Color("customButtonBackgroundColor"))
-            )
-            .padding([.trailing, .top], Constants.buttonTopTrailingPadding)
         }
     }
 }
