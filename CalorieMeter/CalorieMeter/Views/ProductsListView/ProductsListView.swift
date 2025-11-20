@@ -78,7 +78,7 @@ struct ProductsListView: View {
         // For some reason CustomAlertView is not showing List reload animation, so here we use default one
         .alert(Constants.deletionAlertPrimaryText, isPresented: $viewModel.showDeleteAlert) {
             Button(Constants.alertDeleteButtonText, role: .destructive) {
-                viewModel.approveProductForDeletion(from: fetchedProducts)
+                Task { await viewModel.approveProductForDeletion(from: fetchedProducts) }
             }
             
             Button(Constants.alertCancelButtonText, role: .cancel) {

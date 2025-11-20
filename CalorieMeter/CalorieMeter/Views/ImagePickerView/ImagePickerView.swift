@@ -14,6 +14,7 @@ private enum Constants {
 }
 
 // MARK: - ImagePickerView
+@MainActor
 struct ImagePickerView: UIViewControllerRepresentable {
     @Binding var selectedImage: UIImage?
 
@@ -48,13 +49,32 @@ struct ImagePickerView: UIViewControllerRepresentable {
 
             if provider.canLoadObject(ofClass: UIImage.self) {
                 provider.loadObject(ofClass: UIImage.self) { image, _ in
-                    DispatchQueue.main.async {
-                        withAnimation(.spring) {
-                            self.parent.selectedImage = image as? UIImage
+                    // Safely capture image on main actor
+                    if let uiImage = image as? UIImage {
+                        Task { @MainActor in
+                            withAnimation(.spring) {
+                                // Create a copy to avoid data race
+                                self.parent.selectedImage = uiImage.fixedOrientation()
+                            }
                         }
                     }
                 }
             }
         }
+    }
+}
+
+// MARK: - extension UIImage
+// used for track orieentation metadata and rotate if required
+extension UIImage {
+    func fixedOrientation() -> UIImage {
+        if imageOrientation == .up { return self }
+
+        UIGraphicsBeginImageContextWithOptions(size, false, scale)
+        draw(in: CGRect(origin: .zero, size: size))
+        let normalizedImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        return normalizedImage ?? self
     }
 }

@@ -107,6 +107,7 @@ final class CoreDataManager {
     }
     
     // Delete product from list
+    @MainActor
     func deleteEntity(offsets: IndexSet, products: FetchedResults<ProductItem>, context: NSManagedObjectContext) {
         offsets.map { products[$0] }.forEach(context.delete)
         CoreDataManager().save(context: context)

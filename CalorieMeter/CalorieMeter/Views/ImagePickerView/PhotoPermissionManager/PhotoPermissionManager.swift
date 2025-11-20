@@ -9,6 +9,7 @@ import SwiftUI
 import PhotosUI
 
 // MARK: - PhotoPermissionManager
+@MainActor
 final class PhotoPermissionManager: ObservableObject {
     @Published var authorizationStatus: PHAuthorizationStatus = .notDetermined
     
@@ -30,7 +31,7 @@ final class PhotoPermissionManager: ObservableObject {
 
     func requestPermission() {
         PHPhotoLibrary.requestAuthorization(for: .readWrite) { status in
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 self.authorizationStatus = status
             }
         }

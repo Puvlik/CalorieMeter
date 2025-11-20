@@ -35,7 +35,8 @@ class ProductsListViewModel: ObservableObject {
         showDeleteAlert = true
     }
     
-    func approveProductForDeletion(from products: FetchedResults<ProductItem>) {
+    @MainActor
+    func approveProductForDeletion(from products: FetchedResults<ProductItem>) async {
         guard let item = productToDelete,
               let index = products.firstIndex(of: item) else { return }
         
