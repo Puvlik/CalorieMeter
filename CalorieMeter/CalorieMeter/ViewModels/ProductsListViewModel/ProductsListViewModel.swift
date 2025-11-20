@@ -8,6 +8,7 @@
 import SwiftUI
 import CoreData
 
+// MARK: - ProductsListViewModel
 class ProductsListViewModel: ObservableObject {
     @Published var showEditProductSheet = false
     @Published var showDeleteAlert = false
@@ -18,6 +19,7 @@ class ProductsListViewModel: ObservableObject {
     // MARK: - Core Data
     private let context: NSManagedObjectContext
     
+    // MARK: - Init
     init(context: NSManagedObjectContext) {
         self.context = context
     }
@@ -53,7 +55,7 @@ class ProductsListViewModel: ObservableObject {
         showDeleteAlert = false
     }
     
-    // MARK: - Calculations
+    // MARK: - Total calories calculations in products list
     func totalCaloriesSummary(for products: FetchedResults<ProductItem>) -> Int {
         products.map { Int($0.calories) }.reduce(0, +)
     }

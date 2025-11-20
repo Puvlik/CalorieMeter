@@ -25,20 +25,20 @@ private enum Constants {
 
 // MARK: - ProductLargeImageView
 struct ProductLargeImageView: View {
-    @Binding var showPicker: Bool
+    @Binding var showImagePicker: Bool
     
-    var image: UIImage
+    var productImage: UIImage
     
     var body: some View {
         ZStack(alignment: .topTrailing) {
-            Image(uiImage: image)
+            Image(uiImage: productImage)
                 .resizable()
                 .scaledToFill()
                 .frame(height: Constants.productImageHeight)
                 .clipShape(RoundedRectangle(cornerRadius: Constants.productImageCornerRadius))
             
             Button {
-                showPicker = true
+                showImagePicker = true
             } label: {
                 Image(systemName: "photo.badge.magnifyingglass")
                     .renderingMode(.template)
@@ -50,19 +50,15 @@ struct ProductLargeImageView: View {
             .frame(width: Constants.buttonWidth, height: Constants.buttonHeight)
             .buttonStyle(.plain)
             .overlay(
-                RoundedRectangle(
-                    cornerRadius: Constants.buttonCornerRadius,
-                )
-                .stroke(
-                    Color("customButtonBorderColor"),
-                    lineWidth: Constants.buttonBorderWidth
-                )
+                RoundedRectangle(cornerRadius: Constants.buttonCornerRadius)
+                    .stroke(
+                        Color("customButtonBorderColor"),
+                        lineWidth: Constants.buttonBorderWidth
+                    )
             )
             .background(
-                RoundedRectangle(
-                    cornerRadius: Constants.buttonCornerRadius,
-                )
-                .foregroundColor(Color("customButtonBackgroundColor"))
+                RoundedRectangle(cornerRadius: Constants.buttonCornerRadius)
+                    .foregroundColor(Color("customButtonBackgroundColor"))
             )
             .padding([.trailing, .top], Constants.buttonTopTrailingPadding)
         }

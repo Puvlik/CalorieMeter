@@ -19,7 +19,7 @@ private enum Constants {
 
 // MARK: Enums
 // ProductCheckResult used for fields validation controlling state of adding new products
-enum ProductCheckResult {
+enum ProductFieldsCheckResult {
     // EmptyFieldsDataIssue for validating what fields is causing an issue
     enum EmptyFieldsDataIssue {
         // EmptyField for validating what field is not filled while second one is OK
@@ -46,6 +46,7 @@ enum ProductCheckResult {
 final class CoreDataManager {
     let container: NSPersistentContainer
 
+    // MARK: - Init
     init() {
         container = NSPersistentContainer(name: "CalorieMeter")
 
@@ -116,7 +117,7 @@ final class CoreDataManager {
         productInfo: (title: String, calories: Double),
         exclude productToExclude: ProductItem? = nil,
         managedContext: NSManagedObjectContext
-    ) -> ProductCheckResult {
+    ) -> ProductFieldsCheckResult {
         let titleIsEmpty = productInfo.title.isEmpty
         let caloriesIsZero = productInfo.calories == 0
 

@@ -9,7 +9,7 @@ import SwiftUI
 
 // MARK: - Constants
 private enum Constants {
-    static var floatingButtonText: String { "Add" }
+    static var buttonTextString: String { "Add" }
     static var buttonTextSize: CGFloat { 18 }
     static var buttonContentSpacing: CGFloat { 8 }
     static var buttonWidth: CGFloat { 90 }
@@ -31,25 +31,20 @@ struct AddNewProductButton: View {
             openSheetView.toggle()
         } label: {
             HStack(alignment: .center, spacing: Constants.buttonContentSpacing) {
-                Text(Constants.floatingButtonText)
-                    .font(
-                        .system(size: Constants.buttonTextSize, weight: .semibold)
-                    )
+                Text(Constants.buttonTextString)
+                    .font(.system(size: Constants.buttonTextSize, weight: .semibold))
                 
                 Image(systemName: "cart.badge.plus")
                     .resizable()
                     .frame(width: Constants.cartIconWidth, height: Constants.cartIconHeight)
                     .padding(.bottom, Constants.cartIconBottomPadding)
-                    
             }
         }
         .foregroundColor(.black)
         .frame(width: Constants.buttonWidth, height: Constants.buttonHeight)
         .background(
-            RoundedRectangle(
-                cornerRadius: Constants.buttonCornerRadius,
-            )
-            .foregroundColor(Color("customButtonBackgroundColor"))
+            RoundedRectangle(cornerRadius: Constants.buttonCornerRadius)
+                .foregroundColor(Color("customButtonBackgroundColor"))
         )
         .overlay(
             RoundedRectangle(cornerRadius: Constants.buttonCornerRadius)

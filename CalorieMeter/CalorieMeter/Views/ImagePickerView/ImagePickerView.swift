@@ -36,6 +36,7 @@ struct ImagePickerView: UIViewControllerRepresentable {
     final class Coordinator: NSObject, PHPickerViewControllerDelegate {
         let parent: ImagePickerView
 
+        // MARK: - Init
         init(_ parent: ImagePickerView) {
             self.parent = parent
         }

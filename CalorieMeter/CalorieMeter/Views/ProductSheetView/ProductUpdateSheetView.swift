@@ -60,7 +60,10 @@ struct ProductUpdateSheetView: View {
     @State private var title = ""
     @State private var calories: Double? = nil
     @State private var pickedImage: UIImage?
-    @State private var showPicker = false
+    
+    @State private var showImagePicker = false
+    @State private var showDuplicateAlert = false
+    @State private var errorAlerView: ProductInfoErrorAlertView?
     
     @State private var numberFormatter: NumberFormatter = {
         var numberFormatter = NumberFormatter()
@@ -69,9 +72,6 @@ struct ProductUpdateSheetView: View {
     }()
     
     @Binding var selectedProduct: FetchedResults<ProductItem>.Element?
-    
-    @State private var showDuplicateAlert = false
-    @State private var customAlertView: CustomAlertView?
     
     var body: some View {
         Form {
@@ -83,10 +83,10 @@ struct ProductUpdateSheetView: View {
                     .keyboardType(.numberPad)
                 
                 if let uiImage = pickedImage ?? (selectedProduct?.image.flatMap { UIImage(data: $0) }) {
-                    ProductLargeImageView(showPicker: $showPicker, image: uiImage)
+                    ProductLargeImageView(showImagePicker: $showImagePicker, productImage: uiImage)
                 } else {
                     Button {
-                        showPicker = true
+                        showImagePicker = true
                     } label: {
                         HStack(alignment: .center, spacing: Constants.photoPickerButtonContentSpacing) {
                             Spacer()
@@ -126,6 +126,7 @@ struct ProductUpdateSheetView: View {
         .scrollIndicators(.hidden)
         .listSectionSpacing(.compact)
         .presentationDetents([.fraction(
+            // In rush for adaptive sheetView height when product image picked or not
             pickedImage == nil ? Constants.fractionMinimumValue : Constants.fractionMaximumValue)]
         )
         .onAppear {
@@ -138,10 +139,10 @@ struct ProductUpdateSheetView: View {
             calories = selectedProduct.calories
             pickedImage = selectedProduct.image.flatMap { UIImage(data: $0) }
         }
-        .alert(item: $customAlertView) { alert in
+        .alert(item: $errorAlerView) { alert in
             alert.makeAlert()
         }
-        .sheet(isPresented: $showPicker) {
+        .sheet(isPresented: $showImagePicker) {
             ImagePickerView(selectedImage: $pickedImage)
         }
         .onDisappear {
@@ -180,10 +181,10 @@ private extension ProductUpdateSheetView {
         }
     }
     
-    func constructCustomAlert(accordingTo vadidationResult: ProductCheckResult) {
+    func constructCustomAlert(accordingTo vadidationResult: ProductFieldsCheckResult) {
         switch vadidationResult {
         case .success: // No alert, just save product to DB
-            customAlertView = nil
+            errorAlerView = nil
             
             if let product = selectedProduct {
                 editExistingProduct(product)
@@ -192,7 +193,7 @@ private extension ProductUpdateSheetView {
             }
             
         case .duplicate:
-            customAlertView = CustomAlertView(
+            errorAlerView = ProductInfoErrorAlertView(
                 title: Constants.duplicatesAlertPrimaryText,
                 message: Constants.duplicatesAlertSecondaryText,
                 primaryButton: .default(Text(Constants.saveButtonText)) {
@@ -228,7 +229,7 @@ private extension ProductUpdateSheetView {
                 }
             }
             
-            customAlertView = CustomAlertView(
+            errorAlerView = ProductInfoErrorAlertView(
                 title: issuePrimaryText,
                 message: issueSecondaryText,
                 primaryButton: .cancel(Text(Constants.alertOKButtonText)) {},

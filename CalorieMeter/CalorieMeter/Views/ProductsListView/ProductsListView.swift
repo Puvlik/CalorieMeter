@@ -22,6 +22,7 @@ private enum Constants {
     static var productRowImageCornerRadius: CGFloat { 12 }
     
     static var totalCaloriesTopPadding: CGFloat { 16 }
+    
     static var dividerHeight: CGFloat { 1 }
     static var dividerTopPadding: CGFloat { 8 }
     
@@ -36,6 +37,7 @@ struct ProductsListView: View {
     @StateObject private var viewModel: ProductsListViewModel
     
     @FetchRequest(sortDescriptors: [SortDescriptor(\.fillingDate, order: .reverse)])
+    
     private var fetchedProducts: FetchedResults<ProductItem>
     
     // MARK: - Init
@@ -88,7 +90,7 @@ struct ProductsListView: View {
     }
 }
 
-extension ProductsListView {
+private extension ProductsListView {
     private func setupProductListRow(with product: ProductItem) -> some View {
         HStack(alignment: .center, spacing: Constants.productRowHorizontalSpacing) {
             // Its impossible to get title == nil, but anyway lets avoid force unwrap
