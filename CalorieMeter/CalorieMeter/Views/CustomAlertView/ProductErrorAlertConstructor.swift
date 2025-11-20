@@ -1,5 +1,5 @@
 //
-//  ProductInfoErrorAlertView.swift
+//  ProductErrorAlertConstructor.swift
 //  CalorieMeter
 //
 //  Created by Pavel Klopat on 19.11.25.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct ProductInfoErrorAlertView: Identifiable {
+struct ProductErrorAlertConstructor: Identifiable {
     let id = UUID()
     let title: String
     let message: String

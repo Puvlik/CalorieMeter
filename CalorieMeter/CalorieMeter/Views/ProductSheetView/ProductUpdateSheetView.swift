@@ -31,6 +31,10 @@ private enum Constants {
     static var productCaloriesNotFilledPrimaryText: String { "Product calories can't be empty or zero" }
     static var productCaloriesNotFilledSecondaryText: String { "Please update or fill in product calories field" }
     
+    static var galleryPermissionAlertPrimaryText: String { "Gallery permission required" }
+    static var galleryPermissionAlertSecondaryText: String { "Please allow access to your Photos in Settings to select an image" }
+    static var openSettingsText: String { "Open Settings" }
+    
     // Common button texts for all types of Alerts
     static var alertSaveButtonText: String { "Add" }
     static var alertCancelButtonText: String { "Cancel" }
@@ -47,11 +51,12 @@ private enum Constants {
     static var addImageIconWidth: CGFloat { 30 }
     
     static var fractionMinimumValue: CGFloat { 0.31 }
-    static var fractionMaximumValue: CGFloat { 0.52 }
+    static var fractionMaximumValue: CGFloat { 0.57 }
 }
 
 // MARK: - ProductUpdateSheetView
 struct ProductUpdateSheetView: View {
+    @StateObject private var permissionManager = PhotoPermissionManager()
     @Environment(\.managedObjectContext) var managedContext
     @Environment(\.dismiss) var dismiss
     
@@ -63,7 +68,7 @@ struct ProductUpdateSheetView: View {
     
     @State private var showImagePicker = false
     @State private var showDuplicateAlert = false
-    @State private var errorAlerView: ProductInfoErrorAlertView?
+    @State private var errorAlertView: ProductErrorAlertConstructor?
     
     @State private var numberFormatter: NumberFormatter = {
         var numberFormatter = NumberFormatter()
@@ -83,10 +88,34 @@ struct ProductUpdateSheetView: View {
                     .keyboardType(.numberPad)
                 
                 if let uiImage = pickedImage ?? (selectedProduct?.image.flatMap { UIImage(data: $0) }) {
-                    ProductLargeImageView(showImagePicker: $showImagePicker, productImage: uiImage)
+                    ProductLargeImageView(
+                        permissionManager: permissionManager,
+                        showImagePicker: $showImagePicker,
+                        galleryPermissionAlert: $errorAlertView,
+                        productImage: uiImage
+                    )
                 } else {
                     Button {
-                        showImagePicker = true
+                        permissionManager.checkPermission()
+                        
+                        switch permissionManager.authorizationStatus {
+                        case .authorized, .limited:
+                            showImagePicker = true
+                        case .denied, .restricted:
+                            errorAlertView = ProductErrorAlertConstructor(
+                                title: Constants.galleryPermissionAlertPrimaryText,
+                                message: Constants.galleryPermissionAlertSecondaryText,
+                                primaryButton: .default(Text(Constants.openSettingsText)) {
+                                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                                        UIApplication.shared.open(url)
+                                    }
+                                },
+                                secondaryButton: .cancel(Text(Constants.alertCancelButtonText)) {}
+                            )
+                        default:
+                            break
+                        }
+                        // TODO: Сделать алерт типо у вас пермишшен закрыт фулл, измените настройки
                     } label: {
                         HStack(alignment: .center, spacing: Constants.photoPickerButtonContentSpacing) {
                             Spacer()
@@ -139,8 +168,13 @@ struct ProductUpdateSheetView: View {
             calories = selectedProduct.calories
             pickedImage = selectedProduct.image.flatMap { UIImage(data: $0) }
         }
-        .alert(item: $errorAlerView) { alert in
-            alert.makeAlert()
+        .onChange(of: permissionManager.authorizationStatus) { oldStatus, newStatus in
+            if newStatus == .authorized || newStatus == .limited {
+                showImagePicker = true
+            }
+        }
+        .alert(item: $errorAlertView) { alert in
+            return alert.makeAlert()
         }
         .sheet(isPresented: $showImagePicker) {
             ImagePickerView(selectedImage: $pickedImage)
@@ -184,7 +218,7 @@ private extension ProductUpdateSheetView {
     func constructCustomAlert(accordingTo vadidationResult: ProductFieldsCheckResult) {
         switch vadidationResult {
         case .success: // No alert, just save product to DB
-            errorAlerView = nil
+            errorAlertView = nil
             
             if let product = selectedProduct {
                 editExistingProduct(product)
@@ -193,7 +227,7 @@ private extension ProductUpdateSheetView {
             }
             
         case .duplicate:
-            errorAlerView = ProductInfoErrorAlertView(
+            errorAlertView = ProductErrorAlertConstructor(
                 title: Constants.duplicatesAlertPrimaryText,
                 message: Constants.duplicatesAlertSecondaryText,
                 primaryButton: .default(Text(Constants.saveButtonText)) {
@@ -229,7 +263,7 @@ private extension ProductUpdateSheetView {
                 }
             }
             
-            errorAlerView = ProductInfoErrorAlertView(
+            errorAlertView = ProductErrorAlertConstructor(
                 title: issuePrimaryText,
                 message: issueSecondaryText,
                 primaryButton: .cancel(Text(Constants.alertOKButtonText)) {},

@@ -13,7 +13,7 @@ private enum Constants {
     static var photoPickerSelectionLimit: Int { 1 }
 }
 
-// MARK: - Constants
+// MARK: - ImagePickerView
 struct ImagePickerView: UIViewControllerRepresentable {
     @Binding var selectedImage: UIImage?
 
@@ -58,4 +58,3 @@ struct ImagePickerView: UIViewControllerRepresentable {
         }
     }
 }
-
